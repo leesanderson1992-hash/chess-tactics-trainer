@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess Tactics Trainer</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --blue: #2563eb;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .title-block h1 {
+      margin: 0;
+      font-size: 34px;
+    }
+
+    .title-block p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    button.good { background: var(--green); color: #fff; border-color: var(--green); }
+    button.partial { background: var(--amber); color: #fff; border-color: var(--amber); }
+    button.bad { background: var(--red); color: #fff; border-color: var(--red); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+    }
+
+    .instruction-card {
+      margin-bottom: 12px;
+      background: #fffaf0;
+      border-color: #f3d9a4;
+      padding: 12px 14px;
+    }
+
+    .instruction-card h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .instruction-card ol {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .instruction-card li {
+      margin: 0 0 4px;
+      line-height: 1.35;
+    }
+
+    .instruction-card li:last-child {
+      margin-bottom: 0;
+    }
+
+    .image-wrap {
+      text-align: center;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .answer-panel-label {
+      font-weight: 700;
+      margin: 6px 0 8px;
+    }
+
+    .image-wrap img {
+      max-width: 100%;
+      max-height: 40vh;
+      display: block;
+      background: #fff;
+    }
+
+    .visual-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .visual-row.with-side-answer {
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+      align-items: start;
+    }
+
+    .answer-panel-side .image-wrap {
+      margin-bottom: 0;
+    }
+
+    .trainer-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .trainer-controls {
+      position: sticky;
+      bottom: 0;
+      background: var(--card);
+      padding-top: 10px;
+      border-top: 1px solid #e5e7eb;
+      z-index: 2;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      font-size: 17px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      font-size: 16px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .small { color: var(--muted); font-size: 14px; }
+    .feedback { margin-top: 12px; min-height: 24px; }
+    .mark-row { display: none; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .sidebar h3 { margin-top: 0; }
+
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 15px;
+    }
+
+    .list {
+      max-height: 260px;
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .list-item {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .list-item:last-child { border-bottom: none; }
+
+    .jump-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .list-item-main {
+      min-width: 0;
+    }
+
+    .list-item-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .tag {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    .tag.correct { background: var(--green); }
+    .tag.partial { background: var(--amber); }
+    .tag.wrong { background: var(--red); }
+
+    .hidden { display: none !important; }
+
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .image-wrap img { max-height: 30vh; }
+      .trainer-controls {
+        position: sticky;
+        bottom: 0;
+      }
+      .visual-row.with-side-answer {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title-block">
+        <h1 id="title">Puzzle 1</h1>
+        <p id="subtitle">To play and win</p>
+        <p class="small" style="margin:8px 0 0;">
+          Books:
+          <a href="index.html">Current Trainer</a>
+          |
+          <a href="index.html?book=ecc5">ECC 5</a>
+          |
+          <a href="index.html?book=blokh">Blokh</a>
+        </p>
+      </div>
+      <div class="btn-row">
+        <button id="normalModeBtn" class="primary">Normal Mode</button>
+        <button id="mistakesModeBtn">Redo Mistakes</button>
+        <button id="parentModeBtn">Parent Review</button>
+        <button id="resetProgressBtn">Reset Progress</button>
+      </div>
+    </div>
+
+    <div class="card instruction-card">
+      <h2>How to Solve</h2>
+      <ol>
+        <li>Type your answer and say why it works.</li>
+        <li>Check the answer and make sure you fully understand it.</li>
+        <li>Mark it right only if you saw the whole forcing line to the end.</li>
+      </ol>
+    </div>
+
+    <div id="trainerView" class="grid">
+      <div class="card trainer-card">
+        <div id="visualRow" class="visual-row">
+          <div class="image-wrap">
+            <img id="puzzleImage" src="" alt="Puzzle" loading="lazy">
+          </div>
+
+          <div id="answerPanel" class="hidden">
+            <div class="answer-panel-label">Answer</div>
+            <div class="image-wrap">
+              <img id="answerImage" src="" alt="Answer" loading="lazy">
+            </div>
+          </div>
+        </div>
+
+        <div class="trainer-controls">
+          <div style="font-weight:700;margin-bottom:8px;">Type your answer</div>
+          <input id="answerInput" type="text" placeholder="e.g. Bxh7+">
+          <div class="small" style="margin-top:8px;">She must enter an answer before reveal.</div>
+
+          <div class="btn-row" style="margin-top:14px;">
+            <button id="backBtn">Back</button>
+            <button id="submitBtn" class="primary">Submit</button>
+            <button id="nextBtn">Next</button>
+          </div>
+
+          <div id="feedback" class="feedback"></div>
+
+          <div id="markRow" class="mark-row">
+            <button class="good" data-mark="correct">Correct</button>
+            <button class="partial" data-mark="partial">Partial</button>
+            <button class="bad" data-mark="wrong">Wrong</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card sidebar">
+        <h3>Mistakes / Reviews</h3>
+        <div class="stat"><span>Current puzzle</span><strong id="statCurrent">1</strong></div>
+        <div class="stat"><span>Last new puzzle</span><strong id="statLast">1</strong></div>
+        <div class="stat"><span>Completed</span><strong id="statCompleted">0</strong></div>
+        <div class="stat"><span>Correct</span><strong id="statCorrect">0</strong></div>
+        <div class="stat"><span>Partial</span><strong id="statPartial">0</strong></div>
+        <div class="stat"><span>Wrong</span><strong id="statWrong">0</strong></div>
+        <div class="stat"><span>Review queue</span><strong id="statMistakes">0</strong></div>
+
+        <h3 style="margin-top:18px;">Go To Puzzle</h3>
+        <div class="jump-row">
+          <input id="jumpInput" type="number" min="1" step="1" placeholder="Puzzle number">
+          <button id="jumpBtn" class="primary">Open</button>
+        </div>
+        <div id="jumpHelp" class="small"></div>
+
+        <h3 style="margin-top:18px;">Done Puzzles</h3>
+        <div id="doneList" class="list"></div>
+
+        <h3 style="margin-top:18px;">Queue</h3>
+        <div id="mistakeList" class="list"></div>
+      </div>
+    </div>
+
+    <div id="parentView" class="card hidden">
+      <div class="topbar" style="margin-bottom:12px;">
+        <div>
+          <h2 style="margin:0;">Parent Review</h2>
+          <p class="small" style="margin:6px 0 0;">Saved answers and marks.</p>
+        </div>
+        <div class="btn-row">
+          <button id="closeParentViewBtn" class="primary">Back to Trainer</button>
+          <button id="exportJsonBtn">Export JSON</button>
+        </div>
+      </div>
+      <div id="parentLogList" class="list" style="max-height:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const BOOKS = {
+      default: {
+        id: 'default',
+        name: 'Current Trainer',
+        totalPuzzles: 3003,
+        storageKey: 'chess-tactics-trainer-v3',
+        metadataPath: 'puzzle_metadata.json',
+        questionDir: 'puzzles_question',
+        answerDir: 'puzzles_answer',
+        defaultSubtitle: 'To play and win',
+        headingPrefix: 'Puzzle',
+        revealBelow: false
+      },
+      ecc5: {
+        id: 'ecc5',
+        name: 'ECC 5',
+        totalPuzzles: 2862,
+        storageKey: 'chess-tactics-trainer-ecc5-v1',
+        metadataPath: 'ecc5_metadata.json',
+        questionDir: 'ecc5_questions',
+        answerDir: 'ecc5_answers',
+        defaultSubtitle: 'Encyclopedia of Chess Combinations, 5th Edition',
+        headingPrefix: 'ECC 5 Puzzle',
+        revealBelow: false
+      },
+      blokh: {
+        id: 'blokh',
+        name: 'Blokh',
+        totalPuzzles: 1206,
+        storageKey: 'chess-tactics-trainer-blokh-v1',
+        metadataPath: 'blokh_metadata.json',
+        questionDir: 'blokh_questions',
+        answerDir: 'blokh_answers',
+        defaultSubtitle: 'Combinational Motifs',
+        headingPrefix: 'Blokh Puzzle',
+        revealBelow: true
+      }
+    };
+    const currentBook = BOOKS[new URLSearchParams(window.location.search).get('book')] || BOOKS.default;
+    const TOTAL_PUZZLES = currentBook.totalPuzzles;
+    const STORAGE_KEY = currentBook.storageKey;
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvWJi_RwC3wH5uvq6Fnt8CA4kboRxyVe3slslQeOeLGEv3MEOCr0OjyhRM8zwwTlB8pg/exec';
+    const PARENT_PASSWORD = 'parent123';
+
+    let metadata = {};
+    let appState = {
+      currentPuzzle: 1,
+      normalCurrent: 1,
+      answers: {},
+      reviewQueue: []
+    };
+
+    const els = {
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      visualRow: document.getElementById('visualRow'),
+      puzzleImage: document.getElementById('puzzleImage'),
+      answerPanel: document.getElementById('answerPanel'),
+      answerImage: document.getElementById('answerImage'),
+      answerInput: document.getElementById('answerInput'),
+      feedback: document.getElementById('feedback'),
+      markRow: document.getElementById('markRow'),
+      submitBtn: document.getElementById('submitBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      backBtn: document.getElementById('backBtn'),
+      trainerView: document.getElementById('trainerView'),
+      parentView: document.getElementById('parentView'),
+      parentLogList: document.getElementById('parentLogList'),
+      mistakeList: document.getElementById('mistakeList'),
+      doneList: document.getElementById('doneList'),
+      statCurrent: document.getElementById('statCurrent'),
+      statLast: document.getElementById('statLast'),
+      statCompleted: document.getElementById('statCompleted'),
+      statCorrect: document.getElementById('statCorrect'),
+      statPartial: document.getElementById('statPartial'),
+      statWrong: document.getElementById('statWrong'),
+      statMistakes: document.getElementById('statMistakes'),
+      jumpInput: document.getElementById('jumpInput'),
+      jumpBtn: document.getElementById('jumpBtn'),
+      jumpHelp: document.getElementById('jumpHelp'),
+      normalModeBtn: document.getElementById('normalModeBtn'),
+      mistakesModeBtn: document.getElementById('mistakesModeBtn'),
+      parentModeBtn: document.getElementById('parentModeBtn'),
+      closeParentViewBtn: document.getElementById('closeParentViewBtn'),
+      resetProgressBtn: document.getElementById('resetProgressBtn'),
+      exportJsonBtn: document.getElementById('exportJsonBtn')
+    };
+
+    function pad(num) {
+      return String(num).padStart(4, '0');
+    }
+
+    function questionPath(n) {
+      return currentBook.questionDir + '/puzzle_' + pad(n) + '.jpg';
+    }
+
+    function answerPath(n) {
+      return currentBook.answerDir + '/puzzle_' + pad(n) + '.jpg';
+    }
+
+    function subtitleForPuzzle(n) {
+      if (metadata[String(n)] && metadata[String(n)].subtitle) {
+        return metadata[String(n)].subtitle;
+      }
+      return currentBook.defaultSubtitle;
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        appState.currentPuzzle = parsed.currentPuzzle || 1;
+        appState.normalCurrent = parsed.normalCurrent || 1;
+        appState.answers = parsed.answers || {};
+        appState.reviewQueue = Array.isArray(parsed.reviewQueue) ? parsed.reviewQueue : [];
+      } catch (e) {
+        console.warn('Could not load state', e);
+      }
+    }
+
+    async function loadMetadata() {
+      try {
+        const res = await fetch(currentBook.metadataPath);
+        if (!res.ok) throw new Error('Missing metadata');
+        metadata = await res.json();
+      } catch (e) {
+        metadata = {};
+      }
+    }
+
+    function getDueReviews() {
+      const now = Date.now();
+      return appState.reviewQueue
+        .filter(function (item) { return new Date(item.dueAt).getTime() <= now; })
+        .sort(function (a, b) { return new Date(a.dueAt) - new Date(b.dueAt); });
+    }
+
+    function currentPuzzleNumber() {
+      const due = getDueReviews();
+      if (due.length > 0) return due[0].puzzle;
+      return appState.currentPuzzle;
+    }
+
+    function findReview(puzzle) {
+      return appState.reviewQueue.find(function (item) { return item.puzzle === puzzle; }) || null;
+    }
+
+    function upsertReview(puzzle, days, stage) {
+      const dueAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+      const existing = findReview(puzzle);
+      if (existing) {
+        existing.dueAt = dueAt;
+        existing.stage = stage;
+      } else {
+        appState.reviewQueue.push({ puzzle: puzzle, dueAt: dueAt, stage: stage });
+      }
+    }
+
+    function clearReview(puzzle) {
+      appState.reviewQueue = appState.reviewQueue.filter(function (item) { return item.puzzle !== puzzle; });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    async function sendAnswerToGoogleSheet(payload) {
+      if (!GOOGLE_SCRIPT_URL) return;
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.warn('Could not send answer to Google Sheet', e);
+      }
+    }
+
+    function loadPuzzle() {
+      const puzzle = currentPuzzleNumber();
+      const prior = appState.answers[puzzle];
+      const submitted = !!(prior && prior.submitted);
+
+      document.title = 'Chess Tactics Trainer - ' + currentBook.name;
+      els.title.textContent = currentBook.headingPrefix + ' ' + puzzle;
+      els.subtitle.textContent = subtitleForPuzzle(puzzle);
+      els.puzzleImage.src = questionPath(puzzle);
+      if (currentBook.revealBelow) {
+        els.answerImage.src = submitted ? answerPath(puzzle) : '';
+        els.answerPanel.classList.toggle('hidden', !submitted);
+        els.answerPanel.classList.toggle('answer-panel-side', submitted);
+        els.visualRow.classList.toggle('with-side-answer', submitted);
+      } else {
+        els.answerPanel.classList.add('hidden');
+        els.answerPanel.classList.remove('answer-panel-side');
+        els.visualRow.classList.remove('with-side-answer');
+        els.answerImage.src = '';
+        if (submitted) {
+          els.puzzleImage.src = answerPath(puzzle);
+        }
+      }
+      els.answerInput.value = prior && prior.answer ? prior.answer : '';
+      els.feedback.textContent = submitted
+        ? 'Your answer: ' + prior.answer + (prior.result ? ' | Marked: ' + prior.result : '')
+        : '';
+      els.markRow.style.display = submitted && !prior.result ? 'flex' : 'none';
+      els.submitBtn.disabled = submitted;
+      els.jumpInput.value = puzzle;
+
+      updateStats();
+
+      if (!submitted) {
+        setTimeout(function () {
+          els.answerInput.focus();
+          els.answerInput.select();
+        }, 50);
+      }
+    }
+
+    function updateStats() {
+      const entries = Object.keys(appState.answers)
+        .map(function (k) { return appState.answers[k]; })
+        .filter(function (v) { return v && v.submitted; });
+
+      const completed = entries.length;
+      const correct = entries.filter(function (v) { return v.result === 'correct'; }).length;
+      const partial = entries.filter(function (v) { return v.result === 'partial'; }).length;
+      const wrong = entries.filter(function (v) { return v.result === 'wrong'; }).length;
+
+      els.statCurrent.textContent = currentPuzzleNumber();
+      els.statLast.textContent = appState.currentPuzzle;
+      els.statCompleted.textContent = completed;
+      els.statCorrect.textContent = correct;
+      els.statPartial.textContent = partial;
+      els.statWrong.textContent = wrong;
+      els.statMistakes.textContent = appState.reviewQueue.length;
+      els.jumpHelp.textContent = 'Enter any puzzle from 1 to ' + TOTAL_PUZZLES + '.';
+
+      renderDoneList();
+      renderQueue();
+      renderParentLog();
+    }
+
+    function renderDoneList() {
+      const rows = Object.keys(appState.answers)
+        .map(function (k) { return Number(k); })
+        .filter(function (puzzle) {
+          return appState.answers[puzzle] && appState.answers[puzzle].submitted;
+        })
+        .sort(function (a, b) { return a - b; });
+
+      if (!rows.length) {
+        els.doneList.innerHTML = '<div class="list-item"><span>No completed puzzles yet.</span></div>';
+        return;
+      }
+
+      els.doneList.innerHTML = rows.map(function (puzzle) {
+        const row = appState.answers[puzzle];
+        const result = row.result || 'unmarked';
+        const tagClass = row.result || 'partial';
+
+        return '<div class="list-item">' +
+          '<div class="list-item-main">' +
+            '<div><strong>Puzzle ' + puzzle + '</strong></div>' +
+            '<div class="small">' + escapeHtml(subtitleForPuzzle(puzzle)) + '</div>' +
+          '</div>' +
+          '<div class="list-item-actions">' +
+            '<span class="tag ' + tagClass + '">' + result + '</span>' +
+            '<button data-jump="' + puzzle + '">Open</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      els.doneList.querySelectorAll('button[data-jump]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          jumpToPuzzle(Number(btn.dataset.jump));
+        });
+      });
+    }
+
+    async function submitAnswer() {
+      const puzzle = currentPuzzleNumber();
+      const ans = els.answerInput.value.trim();
+      if (!ans) {
+        alert('Type an answer first.');
+        return;
+      }
+
+      appState.answers[puzzle] = {
+        answer: ans,
+        submitted: true,
+        submittedAt: new Date().toISOString(),
+        result: ''
+      };
+
+      if (currentBook.revealBelow) {
+        els.answerImage.src = answerPath(puzzle);
+        els.answerPanel.classList.remove('hidden');
+        els.answerPanel.classList.add('answer-panel-side');
+        els.visualRow.classList.add('with-side-answer');
+      } else {
+        els.puzzleImage.src = answerPath(puzzle);
+      }
+      els.feedback.textContent = 'Your answer: ' + ans;
+      els.markRow.style.display = 'flex';
+      els.submitBtn.disabled = true;
+
+      saveState();
+      updateStats();
+
+      await sendAnswerToGoogleSheet({
+        eventType: 'submit',
+        puzzle: puzzle,
+        subtitle: subtitleForPuzzle(puzzle),
+        answer: ans,
+        submittedAt: appState.answers[puzzle].submittedAt,
+        markedAt: '',
+        result: '',
+        mode: 'normal'
+      });
+    }
+
+    function launchConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const colors = ['#2563eb', '#16a34a', '#dc2626', '#d97706', '#7c3aed'];
+      const pieces = [];
+      for (let i = 0; i < 120; i++) {
+        pieces.push({
+          x: Math.random() * canvas.width,
+          y: -20 - Math.random() * 100,
+          r: 4 + Math.random() * 8,
+          vx: -2 + Math.random() * 4,
+          vy: 2 + Math.random() * 5,
+          rot: Math.random() * Math.PI,
+          vr: -0.2 + Math.random() * 0.4,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+
+      let frame = 0;
+      function tick() {
+        frame++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(function (p) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 0.6);
+          ctx.restore();
+        });
+        if (frame < 80) {
+          requestAnimationFrame(tick);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      tick();
+    }
+
+    async function markResult(result) {
+      const puzzle = currentPuzzleNumber();
+      const item = appState.answers[puzzle];
+      if (!item || !item.submitted) return;
+
+      item.result = result;
+      item.markedAt = new Date().toISOString();
+
+      if (result === 'wrong' || result === 'partial') {
+        const existing = findReview(puzzle);
+        if (!existing) {
+          upsertReview(puzzle, 2, 1);
+        } else {
+          upsertReview(puzzle, 7, 2);
+        }
+      } else {
+        clearReview(puzzle);
+        launchConfetti();
+      }
+
+      saveState();
+      updateStats();
+
+      await sendAnswerToGoogleSheet({
+        eventType: 'mark',
+        puzzle: puzzle,
+        subtitle: subtitleForPuzzle(puzzle),
+        answer: item.answer || '',
+        submittedAt: item.submittedAt || '',
+        markedAt: item.markedAt,
+        result: result,
+        mode: 'normal'
+      });
+
+      autoAdvance();
+    }
+
+    function autoAdvance() {
+      const due = getDueReviews();
+      if (due.length > 0) {
+        loadPuzzle();
+        return;
+      }
+      if (appState.currentPuzzle < TOTAL_PUZZLES) {
+        appState.currentPuzzle += 1;
+        appState.normalCurrent = appState.currentPuzzle;
+      }
+      saveState();
+      loadPuzzle();
+    }
+
+    function nextPuzzle() {
+      if (appState.currentPuzzle < TOTAL_PUZZLES) {
+        appState.currentPuzzle += 1;
+        appState.normalCurrent = appState.currentPuzzle;
+        saveState();
+        loadPuzzle();
+      }
+    }
+
+    function previousPuzzle() {
+      appState.currentPuzzle = Math.max(1, appState.currentPuzzle - 1);
+      appState.normalCurrent = appState.currentPuzzle;
+      saveState();
+      loadPuzzle();
+    }
+
+    function renderQueue() {
+      els.mistakeList.innerHTML = '';
+      if (appState.reviewQueue.length === 0) {
+        els.mistakeList.innerHTML = '<div class="list-item"><span>No reviews queued.</span></div>';
+        return;
+      }
+
+      const sorted = appState.reviewQueue.slice().sort(function (a, b) {
+        return new Date(a.dueAt) - new Date(b.dueAt);
+      });
+
+      sorted.forEach(function (item) {
+        const due = new Date(item.dueAt);
+        const dueText = due.getTime() <= Date.now() ? 'due now' : 'due ' + due.toLocaleDateString();
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.innerHTML = '<span>Puzzle ' + item.puzzle + ' <span class="small">' + dueText + '</span></span><button data-jump="' + item.puzzle + '">Open</button>';
+        els.mistakeList.appendChild(div);
+      });
+
+      els.mistakeList.querySelectorAll('button[data-jump]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          appState.currentPuzzle = Number(btn.dataset.jump);
+          appState.normalCurrent = appState.currentPuzzle;
+          saveState();
+          loadPuzzle();
+        });
+      });
+    }
+
+    function renderParentLog() {
+      const rows = Object.keys(appState.answers)
+        .map(function (k) { return Number(k); })
+        .sort(function (a, b) { return a - b; })
+        .map(function (puzzle) {
+          const row = appState.answers[puzzle];
+          row.puzzle = puzzle;
+          return row;
+        });
+
+      if (!rows.length) {
+        els.parentLogList.innerHTML = '<div class="list-item"><span>No answers saved yet.</span></div>';
+        return;
+      }
+
+      els.parentLogList.innerHTML = rows.map(function (row) {
+        const tag = row.result
+          ? '<span class="tag ' + row.result + '">' + row.result + '</span>'
+          : '<span class="tag partial">unmarked</span>';
+
+        return '<div class="list-item">' +
+          '<div>' +
+            '<div><strong>Puzzle ' + row.puzzle + '</strong> — ' + escapeHtml(subtitleForPuzzle(row.puzzle)) + '</div>' +
+            '<div class="small">Answer: ' + escapeHtml(row.answer || '') + '</div>' +
+            '<div class="small">Submitted: ' + (row.submittedAt ? new Date(row.submittedAt).toLocaleString() : '-') + '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:8px;align-items:center;">' +
+            tag +
+            '<button onclick="jumpToPuzzle(' + row.puzzle + ')">Open</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function jumpToPuzzle(puzzle) {
+      appState.currentPuzzle = Math.max(1, Math.min(TOTAL_PUZZLES, puzzle));
+      appState.normalCurrent = appState.currentPuzzle;
+      saveState();
+      showTrainer();
+      loadPuzzle();
+    }
+
+    function handleJump() {
+      const value = Number(els.jumpInput.value);
+      if (!Number.isInteger(value)) {
+        alert('Enter a whole puzzle number.');
+        return;
+      }
+      jumpToPuzzle(value);
+    }
+
+    function showParentView() {
+      const entered = prompt('Enter parent password:');
+      if (entered !== PARENT_PASSWORD) {
+        alert('Incorrect password');
+        return;
+      }
+      els.trainerView.classList.add('hidden');
+      els.parentView.classList.remove('hidden');
+      renderParentLog();
+    }
+
+    function showTrainer() {
+      els.parentView.classList.add('hidden');
+      els.trainerView.classList.remove('hidden');
+      setTimeout(function () { els.answerInput.focus(); }, 50);
+    }
+
+    function resetProgress() {
+      if (!confirm('Reset all saved progress, answers, and reviews?')) return;
+      appState = {
+        currentPuzzle: 1,
+        normalCurrent: 1,
+        answers: {},
+        reviewQueue: []
+      };
+      saveState();
+      showTrainer();
+      loadPuzzle();
+    }
+
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chess-tactics-progress.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    els.submitBtn.addEventListener('click', submitAnswer);
+    els.answerInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !els.submitBtn.disabled) {
+        e.preventDefault();
+        submitAnswer();
+      }
+    });
+    els.nextBtn.addEventListener('click', nextPuzzle);
+    els.backBtn.addEventListener('click', previousPuzzle);
+    els.jumpBtn.addEventListener('click', handleJump);
+    els.jumpInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleJump();
+      }
+    });
+    els.normalModeBtn.addEventListener('click', showTrainer);
+    els.mistakesModeBtn.addEventListener('click', function () {
+      const due = getDueReviews();
+      if (due.length) {
+        appState.currentPuzzle = due[0].puzzle;
+        saveState();
+        loadPuzzle();
+      } else {
+        alert('No review puzzles are due yet.');
+      }
+    });
+    els.parentModeBtn.addEventListener('click', showParentView);
+    els.closeParentViewBtn.addEventListener('click', showTrainer);
+    els.resetProgressBtn.addEventListener('click', resetProgress);
+    els.exportJsonBtn.addEventListener('click', exportJson);
+
+    document.querySelectorAll('[data-mark]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        markResult(btn.dataset.mark);
+      });
+    });
+
+    window.addEventListener('resize', function () {
+      const canvas = document.getElementById('confettiCanvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    async function init() {
+      loadState();
+      await loadMetadata();
+      showTrainer();
+      loadPuzzle();
+    }
+
+    init();
+  </script>
+</body>
+</html>
