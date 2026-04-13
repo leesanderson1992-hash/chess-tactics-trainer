@@ -187,25 +187,6 @@
     .small { color: var(--muted); font-size: 14px; }
     .feedback { margin-top: 12px; min-height: 24px; }
     .mark-row { display: none; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-    .mark-check {
-      display: none;
-      margin-top: 12px;
-      padding: 10px 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      background: #fafafa;
-      font-size: 14px;
-    }
-    .mark-check label {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      cursor: pointer;
-    }
-    .mark-check input {
-      margin-top: 2px;
-      flex: 0 0 auto;
-    }
     .sidebar h3 { margin-top: 0; }
 
     .stat {
@@ -351,16 +332,8 @@
           </div>
 
           <div id="feedback" class="feedback"></div>
-
-          <div id="forcingLineCheckWrap" class="mark-check">
-            <label>
-              <input id="forcingLineCheck" type="checkbox">
-              <span>I saw the whole forcing line to the end.</span>
-            </label>
-          </div>
-
           <div id="markRow" class="mark-row">
-            <button id="markCorrectBtn" class="good" data-mark="correct">I saw it all</button>
+            <button class="good" data-mark="correct">I saw it all</button>
             <button class="partial" data-mark="partial">I saw the idea but missed part</button>
             <button class="bad" data-mark="wrong">I did not solve it</button>
           </div>
@@ -470,9 +443,6 @@
       answerInput: document.getElementById('answerInput'),
       feedback: document.getElementById('feedback'),
       markRow: document.getElementById('markRow'),
-      forcingLineCheckWrap: document.getElementById('forcingLineCheckWrap'),
-      forcingLineCheck: document.getElementById('forcingLineCheck'),
-      markCorrectBtn: document.getElementById('markCorrectBtn'),
       submitBtn: document.getElementById('submitBtn'),
       nextBtn: document.getElementById('nextBtn'),
       backBtn: document.getElementById('backBtn'),
@@ -636,9 +606,6 @@
         ? 'Your answer: ' + prior.answer + (prior.result ? ' | Marked: ' + resultLabel(prior.result) : '')
         : '';
       els.markRow.style.display = submitted && !prior.result ? 'flex' : 'none';
-      els.forcingLineCheckWrap.style.display = submitted && !prior.result ? 'block' : 'none';
-      els.forcingLineCheck.checked = false;
-      els.markCorrectBtn.disabled = true;
       els.submitBtn.disabled = submitted;
       els.jumpInput.value = puzzle;
 
@@ -804,11 +771,6 @@
       const puzzle = currentPuzzleNumber();
       const item = appState.answers[puzzle];
       if (!item || !item.submitted) return;
-
-      if (result === 'correct' && !els.forcingLineCheck.checked) {
-        alert('Tick the box only if you saw the whole forcing line to the end.');
-        return;
-      }
 
       item.result = result;
       item.markedAt = new Date().toISOString();
@@ -999,9 +961,6 @@
         e.preventDefault();
         submitAnswer();
       }
-    });
-    els.forcingLineCheck.addEventListener('change', function () {
-      els.markCorrectBtn.disabled = !els.forcingLineCheck.checked;
     });
     els.nextBtn.addEventListener('click', nextPuzzle);
     els.backBtn.addEventListener('click', previousPuzzle);
