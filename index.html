@@ -281,11 +281,11 @@
         <p id="subtitle">To play and win</p>
         <p class="small" style="margin:8px 0 0;">
           Books:
-          <a href="index.html">Current Trainer</a>
+          <a href="index.html">Blokh</a>
+          |
+          <a href="index.html?book=default">Current Trainer</a>
           |
           <a href="index.html?book=ecc5">ECC 5</a>
-          |
-          <a href="index.html?book=blokh">Blokh</a>
         </p>
       </div>
       <div class="btn-row">
@@ -420,7 +420,7 @@
         revealBelow: true
       }
     };
-    const currentBook = BOOKS[new URLSearchParams(window.location.search).get('book')] || BOOKS.default;
+    const currentBook = BOOKS[new URLSearchParams(window.location.search).get('book')] || BOOKS.blokh;
     const TOTAL_PUZZLES = currentBook.totalPuzzles;
     const STORAGE_KEY = currentBook.storageKey;
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvWJi_RwC3wH5uvq6Fnt8CA4kboRxyVe3slslQeOeLGEv3MEOCr0OjyhRM8zwwTlB8pg/exec';
