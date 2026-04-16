@@ -526,12 +526,6 @@
     }
 
     function currentPuzzleNumber() {
-      if (appState.activeMode === 'review') {
-        const due = getDueReviews();
-        if (due.length > 0) return due[0].puzzle;
-        appState.activeMode = 'normal';
-        saveState();
-      }
       return appState.currentPuzzle;
     }
 
