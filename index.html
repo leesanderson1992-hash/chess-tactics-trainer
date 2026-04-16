@@ -429,6 +429,7 @@
     let appState = {
       currentPuzzle: 1,
       normalCurrent: 1,
+      activeMode: 'normal',
       answers: {},
       reviewQueue: []
     };
@@ -499,6 +500,7 @@
         const parsed = JSON.parse(raw);
         appState.currentPuzzle = parsed.currentPuzzle || 1;
         appState.normalCurrent = parsed.normalCurrent || 1;
+        appState.activeMode = parsed.activeMode || 'normal';
         appState.answers = parsed.answers || {};
         appState.reviewQueue = Array.isArray(parsed.reviewQueue) ? parsed.reviewQueue : [];
       } catch (e) {
@@ -524,8 +526,12 @@
     }
 
     function currentPuzzleNumber() {
-      const due = getDueReviews();
-      if (due.length > 0) return due[0].puzzle;
+      if (appState.activeMode === 'review') {
+        const due = getDueReviews();
+        if (due.length > 0) return due[0].puzzle;
+        appState.activeMode = 'normal';
+        saveState();
+      }
       return appState.currentPuzzle;
     }
 
@@ -805,10 +811,15 @@
     }
 
     function autoAdvance() {
-      const due = getDueReviews();
-      if (due.length > 0) {
-        loadPuzzle();
-        return;
+      if (appState.activeMode === 'review') {
+        const due = getDueReviews();
+        if (due.length > 0) {
+          appState.currentPuzzle = due[0].puzzle;
+          saveState();
+          loadPuzzle();
+          return;
+        }
+        appState.activeMode = 'normal';
       }
       if (appState.currentPuzzle < TOTAL_PUZZLES) {
         appState.currentPuzzle += 1;
@@ -901,6 +912,7 @@
     function jumpToPuzzle(puzzle) {
       appState.currentPuzzle = Math.max(1, Math.min(TOTAL_PUZZLES, puzzle));
       appState.normalCurrent = appState.currentPuzzle;
+      appState.activeMode = 'normal';
       saveState();
       showTrainer();
       loadPuzzle();
@@ -927,8 +939,10 @@
     }
 
     function showTrainer() {
+      appState.activeMode = 'normal';
       els.parentView.classList.add('hidden');
       els.trainerView.classList.remove('hidden');
+      saveState();
       setTimeout(function () { els.answerInput.focus(); }, 50);
     }
 
@@ -937,6 +951,7 @@
       appState = {
         currentPuzzle: 1,
         normalCurrent: 1,
+        activeMode: 'normal',
         answers: {},
         reviewQueue: []
       };
@@ -975,6 +990,7 @@
     els.mistakesModeBtn.addEventListener('click', function () {
       const due = getDueReviews();
       if (due.length) {
+        appState.activeMode = 'review';
         appState.currentPuzzle = due[0].puzzle;
         saveState();
         loadPuzzle();
