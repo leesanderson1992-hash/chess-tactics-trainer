@@ -290,7 +290,7 @@
       </div>
       <div class="btn-row">
         <button id="normalModeBtn" class="primary">Normal Mode</button>
-        <button id="mistakesModeBtn">Redo Mistakes</button>
+        <button id="mistakesModeBtn">Open Review</button>
         <button id="parentModeBtn">Parent Review</button>
         <button id="resetProgressBtn">Reset Progress</button>
       </div>
@@ -341,14 +341,14 @@
       </div>
 
       <div class="card sidebar">
-        <h3>Mistakes / Reviews</h3>
+        <h3>Progress</h3>
         <div class="stat"><span>Current puzzle</span><strong id="statCurrent">1</strong></div>
         <div class="stat"><span>Last new puzzle</span><strong id="statLast">1</strong></div>
         <div class="stat"><span>Completed</span><strong id="statCompleted">0</strong></div>
         <div class="stat"><span>Correct</span><strong id="statCorrect">0</strong></div>
         <div class="stat"><span>Partial</span><strong id="statPartial">0</strong></div>
         <div class="stat"><span>Wrong</span><strong id="statWrong">0</strong></div>
-        <div class="stat"><span>Review queue</span><strong id="statMistakes">0</strong></div>
+        <div class="stat"><span>Reviews saved</span><strong id="statMistakes">0</strong></div>
 
         <h3 style="margin-top:18px;">Go To Puzzle</h3>
         <div class="jump-row">
@@ -360,7 +360,7 @@
         <h3 style="margin-top:18px;">Done Puzzles</h3>
         <div id="doneList" class="list"></div>
 
-        <h3 style="margin-top:18px;">Queue</h3>
+        <h3 style="margin-top:18px;">Reviews</h3>
         <div id="mistakeList" class="list"></div>
       </div>
     </div>
@@ -429,7 +429,6 @@
     let appState = {
       currentPuzzle: 1,
       normalCurrent: 1,
-      activeMode: 'normal',
       answers: {},
       reviewQueue: []
     };
@@ -500,7 +499,6 @@
         const parsed = JSON.parse(raw);
         appState.currentPuzzle = parsed.currentPuzzle || 1;
         appState.normalCurrent = parsed.normalCurrent || 1;
-        appState.activeMode = parsed.activeMode || 'normal';
         appState.answers = parsed.answers || {};
         appState.reviewQueue = Array.isArray(parsed.reviewQueue) ? parsed.reviewQueue : [];
       } catch (e) {
@@ -805,16 +803,6 @@
     }
 
     function autoAdvance() {
-      if (appState.activeMode === 'review') {
-        const due = getDueReviews();
-        if (due.length > 0) {
-          appState.currentPuzzle = due[0].puzzle;
-          saveState();
-          loadPuzzle();
-          return;
-        }
-        appState.activeMode = 'normal';
-      }
       if (appState.currentPuzzle < TOTAL_PUZZLES) {
         appState.currentPuzzle += 1;
         appState.normalCurrent = appState.currentPuzzle;
@@ -906,7 +894,6 @@
     function jumpToPuzzle(puzzle) {
       appState.currentPuzzle = Math.max(1, Math.min(TOTAL_PUZZLES, puzzle));
       appState.normalCurrent = appState.currentPuzzle;
-      appState.activeMode = 'normal';
       saveState();
       showTrainer();
       loadPuzzle();
@@ -933,7 +920,6 @@
     }
 
     function showTrainer() {
-      appState.activeMode = 'normal';
       els.parentView.classList.add('hidden');
       els.trainerView.classList.remove('hidden');
       saveState();
@@ -945,7 +931,6 @@
       appState = {
         currentPuzzle: 1,
         normalCurrent: 1,
-        activeMode: 'normal',
         answers: {},
         reviewQueue: []
       };
@@ -982,14 +967,15 @@
     });
     els.normalModeBtn.addEventListener('click', showTrainer);
     els.mistakesModeBtn.addEventListener('click', function () {
-      const due = getDueReviews();
-      if (due.length) {
-        appState.activeMode = 'review';
-        appState.currentPuzzle = due[0].puzzle;
+      const sorted = appState.reviewQueue.slice().sort(function (a, b) {
+        return new Date(a.dueAt) - new Date(b.dueAt);
+      });
+      if (sorted.length) {
+        appState.currentPuzzle = sorted[0].puzzle;
         saveState();
         loadPuzzle();
       } else {
-        alert('No review puzzles are due yet.');
+        alert('No review puzzles are saved yet.');
       }
     });
     els.parentModeBtn.addEventListener('click', showParentView);
